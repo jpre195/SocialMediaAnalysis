@@ -1,0 +1,7 @@
+Goals:
+
+1. Get top k topics tweeted
+
+2. Get trend of proportion of tweet polarity.
+
+3. Word cloud
