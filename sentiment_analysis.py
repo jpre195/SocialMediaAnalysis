@@ -9,6 +9,9 @@ import re
 import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import matplotlib.pyplot as plt
+import time
 
 #%% Keys
 api_key = 'qGvaPEu1o3TiI5qlLiEnX1AdW'
@@ -44,7 +47,7 @@ def get_tweets(api, query, count = 100):
     tweets = [] 
   
     # call twitter api to fetch tweets 
-    fetched_tweets = api.search(q = query, count = count)
+    fetched_tweets = api.search(q = query, count = count, lang = 'en')
   
     # parsing tweets one by one 
     for tweet in fetched_tweets: 
@@ -69,9 +72,60 @@ def get_tweets(api, query, count = 100):
     return tweets
 
 #%%
+
+print('Connecting to twitter...')
 auth = OAuthHandler(api_key, api_secret_key)
 
 api = tweepy.API(auth)
+
+q1 = "pandemic OR COVID OR coronavirus"
+
+print('Getting tweets... ')
+tweets = get_tweets(api, q1, count = 10000)
+
+n = 100
+
+for i in range(n):
+    
+    print(i + 1, 'out of', n, sep = ' ')
+    
+    time.sleep(5)
+    more_tweets = get_tweets(api, q1, count = 10000)
+
+    for curr_tweet in more_tweets:
+        
+        tweets.append(curr_tweet)
+    
+    
+
+positives = 0
+negatives = 0
+text = ''
+
+for tweet in tweets:
+    
+    if tweet['sentiment'] == 'positive':
+        positives += 1
+        
+    if tweet['sentiment'] == 'negative':
+        negatives += 1
+        
+    text = tweet['text']
+
+neutrals = len(tweets) - positives - negatives
+
+print('Positives: ', round((positives / len(tweets)) * 100, 2), '%', sep = '')
+print('Neutrals: ', round((neutrals / len(tweets)) * 100, 2), '%', sep = '')
+print('Negatives: ', round((negatives / len(tweets)) * 100, 2), '%', sep = '')
+
+wordcloud = WordCloud(background_color = 'white').generate(text)
+
+plt.imshow(wordcloud, interpolation = 'bilinear')
+plt.axis('off')
+plt.show()
+
+
+
 
 
 
