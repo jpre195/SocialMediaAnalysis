@@ -1,0 +1,1 @@
+curl --request POST --url https://api.twitter.com/1.1/tweets/search/fullarchive/dev.json --header 'authorization: Bearer AAAAAAAAAAAAAAAAAAAAAG3mJwEAAAAAKjmDcN3St16GQXL2y2908mjZE%2FQ%3DIOEDzbSMQrSw2jFx9DulaWGMqP3efOAbVdmABFl6NDSIQj7eFh' --header 'content-type: application/json' --data '{"query":"lang:en", "fromDate":"201901010000", "toDate":"202011270000"}'
