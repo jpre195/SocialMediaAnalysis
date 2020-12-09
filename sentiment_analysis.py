@@ -12,6 +12,8 @@ from textblob import TextBlob
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import matplotlib.pyplot as plt
 import time
+import pandas as pd
+import networkx as nx
 
 #%% Keys
 api_key = 'qGvaPEu1o3TiI5qlLiEnX1AdW'
@@ -75,59 +77,62 @@ def get_tweets(api, query, count = 100):
 
 #%%
 
-print('Connecting to twitter...')
+#print('Connecting to twitter...')
 auth = OAuthHandler(api_key, api_secret_key)
 
-api = tweepy.API(auth)
+api = tweepy.API(auth, wait_on_rate_limit=True)
 
-#q1 = "pandemic OR COVID OR coronavirus"
-##q1 = "lang:en"
-#
-#print('Getting tweets... ')
-#tweets = get_tweets(api, q1, count = 10000)
-#
-#n = 50
-#
-#for i in range(n):
-#    
-#    print(i + 1, 'out of', n, sep = ' ')
-#    
-#    time.sleep(30)
-#    more_tweets = get_tweets(api, q1, count = 10000)
-#
-#    for curr_tweet in more_tweets:
+q1 = "pandemic OR COVID OR coronavirus"
+#q1 = "lang:en"
+
+print('Getting tweets... ')
+tweets = get_tweets(api, q1, count = 10000)
+
+n = 50
+
+for i in range(n):
+    
+    print(i + 1, 'out of', n, sep = ' ')
+    
+    time.sleep(30)
+    more_tweets = get_tweets(api, q1, count = 10000)
+
+    for curr_tweet in more_tweets:
+        
+        tweets.append(curr_tweet)
+    
+    
+    
+#positives = 0
+#negatives = 0
+text = ''
+
+for tweet in tweets:
+    
+#    if tweet['sentiment'] == 'positive':
+#        positives += 1
 #        
-#        tweets.append(curr_tweet)
-#    
-#    
-#    
-##positives = 0
-##negatives = 0
-#text = ''
-#
-#for tweet in tweets:
-#    
-##    if tweet['sentiment'] == 'positive':
-##        positives += 1
-##        
-##    if tweet['sentiment'] == 'negative':
-##        negatives += 1
-#        
-#    text = text + tweet['text']
-#
-##neutrals = len(tweets) - positives - negatives
-#
-##print('Positives: ', round((positives / len(tweets)) * 100, 2), '%', sep = '')
-##print('Neutrals: ', round((neutrals / len(tweets)) * 100, 2), '%', sep = '')
-##print('Negatives: ', round((negatives / len(tweets)) * 100, 2), '%', sep = '')
-#
-#stop_words = ['https', 'RT', 'http', 'will', 'know', 're', 'let'] + list(STOPWORDS)
-#
-#wordcloud = WordCloud(stopwords = stop_words, background_color = 'white').generate(text)
-#
-#plt.imshow(wordcloud, interpolation = 'bilinear')
-#plt.axis('off')
-#plt.show()
+#    if tweet['sentiment'] == 'negative':
+#        negatives += 1
+        
+    text = text + tweet['text']
+
+#neutrals = len(tweets) - positives - negatives
+
+#print('Positives: ', round((positives / len(tweets)) * 100, 2), '%', sep = '')
+#print('Neutrals: ', round((neutrals / len(tweets)) * 100, 2), '%', sep = '')
+#print('Negatives: ', round((negatives / len(tweets)) * 100, 2), '%', sep = '')
+
+stop_words = ['https', 'RT', 'http', 'will', 'know', 're', 'let'] + list(STOPWORDS)
+
+wordcloud = WordCloud(collocations = False, stopwords = stop_words, background_color = 'white').generate(text)
+
+plt.imshow(wordcloud, interpolation = 'bilinear')
+plt.axis('off')
+plt.show()
+
+plt.hist([tweet['sentiment'] for tweet in tweets])
+plt.show()
 
 
 #%%
@@ -165,9 +170,12 @@ def user_word_cloud(user):
     #plt.show()
     plt.savefig(user + '.png', dpi = 2000)
     
+    plt.hist([tweet['sentiment'] for tweet in tweets])
+    plt.savefig(user + 'sentiment_analysis.png', dpi = 2000)
+    
     return tweets
 
-users = ['shoes2426', 'RussPhillips11', 'GleasonZane']
+users = ['shoes2426', 'RussPhillips11', 'GleasonZane', 'sean22_sean']
 
 for user in users:
     
@@ -223,7 +231,7 @@ def user_hashtag_word_cloud(username):
 #user = 'RussPhillips11'
 ##user = 'GleasonZane'
 
-users = ['shoes2426', 'RussPhillips11', 'GleasonZane']
+users = ['shoes2426', 'RussPhillips11', 'GleasonZane', 'sean22_sean']
 
 test1 = user_hashtag_word_cloud(user)
 
@@ -272,11 +280,59 @@ def user_mentions_word_cloud(username):
     
     return tweets
 
-users = ['shoes2426', 'RussPhillips11', 'GleasonZane']
+users = ['shoes2426', 'RussPhillips11', 'GleasonZane', 'sean22_sean']
 
 for user in users:
     
     user_mentions_word_cloud(user)
+
+
+#%% Most influential
+    
+#for follower in tweepy.Cursor(api.followers, user).items():
+#    
+#    print(follower.screen_name)
+
+
+start_user = 'shoes2426'
+discovered = [start_user]
+
+followers = []
+
+for follower in tweepy.Cursor(api.followers, start_user).items():
+    
+    followers.append(follower.screen_name)
+    
+network_df = pd.DataFrame({'From' : [start_user for _ in range(len(followers))], 'To' : followers})
+
+for follower in followers:
+    
+    if follower not in discovered:
+        
+        curr_user = follower
+        curr_followers = []
+        
+        for curr_follower in tweepy.Cursor(api.followers, curr_user).items():
+            
+            if curr_follower not in followers:
+                
+                followers.append(curr_follower.screen_name)
+                curr_followers.append(curr_follower.screen_name)
+                
+            new_row = pd.DataFrame({'From' : [curr_user for _ in range(len(curr_followers))], 'To' : curr_followers})
+            
+            network_df = pd.concat([network_df, new_row], axis = 0, ignore_index = True)
+            
+            discovered.append(curr_follower)
+            
+            
+
+
+
+
+
+
+
 
 
 
