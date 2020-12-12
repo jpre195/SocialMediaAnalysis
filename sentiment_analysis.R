@@ -19,6 +19,16 @@ zane_tweets$Sentiment = as.numeric(as.character(zane_tweets$Sentiment))
 russ_tweets$Sentiment = as.numeric(as.character(russ_tweets$Sentiment))
 brown_tweets$Sentiment = as.numeric(as.character(brown_tweets$Sentiment))
 
+shoe_tweets = na.omit(shoe_tweets)
+zane_tweets = na.omit(zane_tweets)
+russ_tweets = na.omit(russ_tweets)
+brown_tweets = na.omit(brown_tweets)
+
+row.names(shoe_tweets) = seq(1, nrow(shoe_tweets))
+row.names(zane_tweets) = seq(1, nrow(zane_tweets))
+row.names(russ_tweets) = seq(1, nrow(russ_tweets))
+row.names(brown_tweets) = seq(1, nrow(brown_tweets))
+
 # EDA ---------------------------------------------------------------------
 
 ggplot(shoe_tweets, aes(x = Sentiment, y = ..density..)) + 
@@ -41,33 +51,28 @@ ggplot(brown_tweets, aes(x = Sentiment, y = ..density..)) +
 
 shoe_params = fitdistr(na.omit(shoe_tweets$Sentiment), 'cauchy', start = list(location = 0, scale = 1))
 zane_params = fitdistr(na.omit(zane_tweets$Sentiment), 'cauchy', start = list(location = 0, scale = 1))
-russ_params = fitdistr(na.omit(russ_tweets$Sentiment), 'cauchy', start = list(location = 0.1, scale = .01), lower = c(-1, 1))
+russ_params = fitdistr(na.omit(russ_tweets$Sentiment), 'cauchy', start = list(location = 0, scale = 1), lower = c(-1, 1))
 brown_params = fitdistr(na.omit(brown_tweets$Sentiment), 'cauchy', start = list(location = 0, scale = 1))
 
-shoe_params = fitdistr(na.omit(shoe_tweets$Sentiment), 'normal')
-
-ggplot(na.omit(shoe_tweets), aes(x = Sentiment, y = ..density..)) +
-  geom_histogram(fill = 'lightblue', color = 'black') +
+ggplot(na.omit(shoe_tweets), aes(x = Sentiment)) +
+  geom_histogram(aes(y = ..density..), fill = 'lightblue', color = 'black', bins = 15) +
   stat_function(fun = dnorm, args = list(mean = shoe_params$estimate[1], sd = shoe_params$estimate[2])) +
   theme_bw()
 
-# ggplot(shoe_tweets, aes(x = Sentiment, y = ..density..)) +
-#   geom_histogram(fill = 'lightblue', color = 'black') +
-#   stat_function(aes(x = Sentiment), fun = dcauchy, args = list(location = shoe_params$estimate[1], scale = shoe_params$estimate[2])) +
-#   theme_bw()
-# 
-# ggplot(zane_tweets, aes(x = Sentiment, y = ..density..)) + 
-#   geom_histogram(fill = 'lightblue', color = 'black') + 
-#   stat_function(fun = dcauchy, args = list(location = zane_params$estimate[1], scale = zane_params$estimate[2])) +
-#   theme_bw()
-# 
-# ggplot(russ_tweets, aes(x = Sentiment, y = ..density..)) + 
-#   geom_histogram(fill = 'lightblue', color = 'black') + 
-#   theme_bw()
-# 
-# ggplot(brown_tweets, aes(x = Sentiment, y = ..density..)) + 
-#   geom_histogram(fill = 'lightblue', color = 'black') + 
-#   theme_bw()
+ggplot(zane_tweets, aes(x = Sentiment)) +
+  geom_histogram(aes(y = ..density..), fill = 'lightblue', color = 'black', bins = 15) +
+  stat_function(fun = dcauchy, args = list(location = zane_params$estimate[1], scale = zane_params$estimate[2])) +
+  theme_bw()
+
+ggplot(russ_tweets, aes(x = Sentiment)) +
+  geom_histogram(aes(y = ..density..), fill = 'lightblue', color = 'black', bins = 15) +
+  stat_function(fun = dcauchy, args = list(location = russ_params$estimate[1], scale = russ_params$estimate[2])) +
+  theme_bw()
+
+ggplot(brown_tweets, aes(x = Sentiment)) +
+  geom_histogram(aes(y = ..density..), fill = 'lightblue', color = 'black', bins = 15) +
+  stat_function(fun = dcauchy, args = list(location = brown_params$estimate[1], scale = brown_params$estimate[2])) +
+  theme_bw()
 
 
 cat('Shoe probability of positive:', 1 - pcauchy(0, location = shoe_params$estimate[1], scale = shoe_params$estimate[2]), '\n')
@@ -82,14 +87,7 @@ cat('Russ probability of negative:', pcauchy(0, location = russ_params$estimate[
 cat('Brown probability of positive:', 1 - pcauchy(0, location = brown_params$estimate[1], scale = brown_params$estimate[2]), '\n')
 cat('Brown probability of negative:', pcauchy(0, location = brown_params$estimate[1], scale = brown_params$estimate[2]), '\n')
 
-cat('Shoe mean tweet: ', mean(na.omit(shoe_tweets$Sentiment)))
-cat('Zane mean tweet: ', mean(na.omit(zane_tweets$Sentiment)))
-cat('Russ mean tweet: ', mean(na.omit(russ_tweets$Sentiment)))
-cat('Brown mean tweet: ', mean(na.omit(brown_tweets$Sentiment)))
-
-cat('Shoe mean tweet: ', mean(rcauchy(10000, location = shoe_params$estimate[1], scale = shoe_params$estimate[2])))
-cat('Zane mean tweet: ', mean(rcauchy(10000, location = zane_params$estimate[1], scale = zane_params$estimate[2])))
-cat('Russ mean tweet: ', mean(rcauchy(10000, location = russ_params$estimate[1], scale = russ_params$estimate[2])))
-cat('Brown mean tweet: ', mean(rcauchy(10000, location = brown_params$estimate[1], scale = brown_params$estimate[2])))
-
-
+cat('Shoe mean tweet: ', mean(na.omit(shoe_tweets$Sentiment)), '\n')
+cat('Zane mean tweet: ', mean(na.omit(zane_tweets$Sentiment)), '\n')
+cat('Russ mean tweet: ', mean(na.omit(russ_tweets$Sentiment)), '\n')
+cat('Brown mean tweet: ', mean(na.omit(brown_tweets$Sentiment)), '\n')
