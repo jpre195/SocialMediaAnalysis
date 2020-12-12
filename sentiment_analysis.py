@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import time
 import pandas as pd
 import networkx as nx
+import csv
 
 #%% Keys
 api_key = 'qGvaPEu1o3TiI5qlLiEnX1AdW'
@@ -157,11 +158,22 @@ def user_word_cloud(user):
         tweets.append(parsed_tweet)
         
     text = ''
+    sentiments = [['Sentiments']]
     
     for tweet in tweets:
     
         text = text + ' ' + tweet['text']
+        sentiments.append([tweet['sentiment']])
     
+    sentiments_df = pd.DataFrame({'Sentiment' : sentiments})
+    
+    sentiments_df.to_csv(user + 'tweet_sentiment.csv', index = False)
+    
+#    with open(user + '_tweet_sentiment.csv', 'w') as f:
+#        
+#        write = csv.writer(f)
+#        
+#        write.writerows(sentiments)
     
     wordcloud = WordCloud(stopwords = stop_words, background_color = 'white').generate(text)
     
